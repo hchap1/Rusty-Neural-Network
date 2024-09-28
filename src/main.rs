@@ -17,7 +17,7 @@ fn main() {
         vec![1f64, 1f64]
     ];
 
-    let targets: Vec<Vec<f64>> = vec![vec![0f64, 1f64, 1f64, 0f64]];
+    let targets = vec![vec![0.0], vec![1.0], vec![1.0], vec![0.0]];
     let mut network: Network = Network::new(vec![2, 3, 1], SIGMOID, 0.5f64);
 
     network.train(inputs, targets, 100000);

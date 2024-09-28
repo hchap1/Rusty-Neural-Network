@@ -16,11 +16,11 @@ pub struct Network {
 
 impl Network {
     pub fn new(layers: Vec<usize>, activation: Activation, learning_rate: f64) -> Self {
-        let mut weights: Vec<Matrix> = Vec::with_capacity(layers.len() - 1);
-        let mut biases: Vec<Matrix> = Vec::with_capacity(layers.len() - 1);
+        let mut weights: Vec<Matrix> = vec![];
+        let mut biases: Vec<Matrix> = vec![];
         for n in 0..layers.len() - 1 {
-            weights[n] = Matrix::random(layers[n + 1], layers[n]);
-            biases[n] = Matrix::random(layers[n + 1], 1);
+            weights.push(Matrix::random(layers[n + 1], layers[n]));
+            biases.push(Matrix::random(layers[n + 1], 1));
         }
         Network { layers, weights, biases, data: vec![], activation, learning_rate }
     }
@@ -31,8 +31,8 @@ impl Network {
         self.data = vec![current.clone()];
         for n in 0..self.layers.len() - 1 {
             current = &self.weights[n] * &current;
-            current += &self.biases[n];
-            current.map(self.activation.function);
+            current = &current + &self.biases[n];
+            current = current.map(self.activation.function);
             self.data.push(current.clone());
         }
         current
@@ -44,8 +44,10 @@ impl Network {
 
         for n in (0..self.layers.len() -1).rev() {
             gradients = gradients.hadamard_product(&errors).map(|x| x * 0.5);
-            self.weights[n] += &gradients * &self.data[n].transpose();
+            self.weights[n] += &(&gradients * &self.data[n].transpose());
             self.biases[n] += &gradients;
+            errors = self.weights[n].transpose() * &errors;
+            gradients = self.data[n].map(self.activation.derivative);
         }
     }
 
