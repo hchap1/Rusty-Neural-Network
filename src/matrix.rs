@@ -58,6 +58,22 @@ impl Matrix {
             print!("{}", self.data[n]);
         }
     }
+
+    pub fn serialise(&self) -> String {
+        format!("{}, {}, {}", self.rows, self.columns, self.data.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(", "))
+    }
+}
+
+impl From<&String> for Matrix {
+    fn from(other: &String) -> Matrix {
+        let components: Vec<String> = other.split(", ").map(|x| x.to_string()).collect::<Vec<String>>();
+        if let (Ok(rows), Ok(columns)) = (components[0].parse::<usize>(), components[1].parse::<usize>()) {
+            let values: Vec<f64> = components[2..].iter().map(|x| x.parse::<f64>().unwrap()).collect::<Vec<f64>>();
+            return Matrix::new(values, rows, columns);
+        } else {
+            panic!("Invalid ROW/COLUMN identifiers. Expected usize, usize.");
+        }
+    }
 }
 
 impl From<Vec<f64>> for Matrix {

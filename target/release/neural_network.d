@@ -1,0 +1,1 @@
+C:\Users\hchap\source\repos\Rusty-Neural-Network\target\release\neural_network.exe: C:\Users\hchap\source\repos\Rusty-Neural-Network\src\activations.rs C:\Users\hchap\source\repos\Rusty-Neural-Network\src\main.rs C:\Users\hchap\source\repos\Rusty-Neural-Network\src\matrix.rs C:\Users\hchap\source\repos\Rusty-Neural-Network\src\network.rs

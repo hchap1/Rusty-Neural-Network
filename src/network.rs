@@ -1,9 +1,7 @@
 use crate::matrix::Matrix;
-
-pub struct Activation {
-    pub function: fn(&f64) -> f64,
-    pub derivative: fn(&f64) -> f64
-}
+use std::io::{self, Write};
+use crate::activations::{Activation, SIGMOID};
+use std::fs::{write, read_to_string};
 
 pub struct Network {
     layers: Vec<usize>,
@@ -11,18 +9,48 @@ pub struct Network {
     biases: Vec<Matrix>,
     data: Vec<Matrix>,
     activation: Activation,
-    learning_rate: f64
 }
 
 impl Network {
-    pub fn new(layers: Vec<usize>, activation: Activation, learning_rate: f64) -> Self {
+    pub fn new(layers: Vec<usize>, activation: Activation) -> Self {
         let mut weights: Vec<Matrix> = vec![];
         let mut biases: Vec<Matrix> = vec![];
         for n in 0..layers.len() - 1 {
             weights.push(Matrix::random(layers[n + 1], layers[n]));
             biases.push(Matrix::random(layers[n + 1], 1));
         }
-        Network { layers, weights, biases, data: vec![], activation, learning_rate }
+        Network { layers, weights, biases, data: vec![], activation }
+    }
+
+    pub fn save(&self, filename: String) {
+        let serialised = self.serialise();
+        let _ = write(filename, serialised);
+    }
+
+    pub fn load(filename: String) -> Result<Self, String> {
+        match read_to_string(filename) {
+            Ok(raw) => {
+                let content: Vec<String> = raw.lines().map(|x| x.to_string()).collect();
+                assert!(content.len() == 3, "Invalid file.");
+                let layers: Vec<usize> = content[0].split(", ").map(|x| if let Ok(n) = x.parse::<usize>() {n} else {
+                    panic!("Found invalid layer, expected usize.");
+                }).collect::<Vec<usize>>();
+                let serial_weights: Vec<String> = content[1].split(" | ").map(|x| x.to_string()).collect();
+                let serial_biases: Vec<String> = content[2].split(" | ").map(|x| x.to_string()).collect();
+                let weights: Vec<Matrix> = serial_weights.iter().map(|x| Matrix::from(x)).collect::<Vec<Matrix>>();
+                let biases: Vec<Matrix> = serial_biases.iter().map(|x| Matrix::from(x)).collect::<Vec<Matrix>>();
+                Ok(Network {
+                    layers,
+                    weights,
+                    biases,
+                    data: vec![],
+                    activation: SIGMOID
+                })
+            }
+            Err(_) => {
+                Err(String::from("File operation failed. Check path."))
+            }
+        }
     }
 
     pub fn feed_forward(&mut self, inputs: Matrix) -> Matrix {
@@ -36,6 +64,10 @@ impl Network {
             self.data.push(current.clone());
         }
         current
+    }
+
+    pub fn predict(&mut self, input: Vec<f64>) -> Vec<f64> {
+        self.feed_forward(Matrix::from(input)).data
     }
 
     pub fn back_propogate(&mut self, inputs: Matrix, targets: Matrix) {
@@ -52,11 +84,20 @@ impl Network {
     }
 
     pub fn train(&mut self, inputs: Vec<Vec<f64>>, targets: Vec<Vec<f64>>, epochs: u32) {
-        for n in 1..=epochs {
+        for e in 1..=epochs {
+            print!("{e}/{epochs}\r");
+            let _ = io::stdout().flush();
             for input in 0..inputs.len() {
                 let output: Matrix = self.feed_forward(Matrix::from(inputs[input].clone()));
                 self.back_propogate(output, Matrix::from(targets[input].clone()));
             }
         }
+    }
+
+    pub fn serialise(&self) -> String {
+        let serial_layers: String = self.layers.iter().map(|x| x.to_string()).collect::<Vec<String>>().join(", ");
+        let serial_weights: Vec<String> = self.weights.iter().map(|x| x.serialise()).collect::<Vec<String>>();
+        let serial_biases: Vec<String> = self.biases.iter().map(|x| x.serialise()).collect::<Vec<String>>();
+        format!("{}\n{}\n{}", serial_layers, serial_weights.join(" | "), serial_biases.join(" | "))
     }
 }
