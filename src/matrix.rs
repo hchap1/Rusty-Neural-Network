@@ -107,7 +107,7 @@ impl Add<&Matrix> for &Matrix {
 impl Sub<&Matrix> for Matrix {
     type Output = Self;
     fn sub(self, other: &Self) -> Self {
-        assert!(self.columns == other.columns && self.rows == other.rows, "Incompatible Dimensions {}, {} x {}, {}",
+        assert!(self.columns == other.columns && self.rows == other.rows, "Incompatible Dimensions {}, {} - {}, {}",
         self.rows, self.columns, other.rows, other.columns);
         let mut new_data: Vec<f64> = vec![];
         for n in 0..(self.rows * other.columns) {
